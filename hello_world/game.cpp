@@ -3,6 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <string>
+#include <cstdlib>
 
 int main()
 {
@@ -23,6 +24,17 @@ int main()
     octagon.setFillColor(sf::Color::Blue);
     octagon.setPosition(200.f, 50.f);
     
+    //load font, create text vars
+    sf::Font font;
+    if(!font.loadFromFile("arial.ttf")){
+        //error
+        std::cout << "Font did not load :(\n";
+    }
+    sf::Text text;
+    text.setFont(font);
+    text.setString("Hello World");
+    text.setCharacterSize(20);//in pixels
+    text.setColor(sf::Color::White);
 
     std::cout << "Game is starting!\n";
 
@@ -41,6 +53,7 @@ int main()
         window.draw(circle);
         window.draw(triangle);
         window.draw(octagon);
+        window.draw(text);
 
         // display the updates
         window.display();
