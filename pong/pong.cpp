@@ -10,8 +10,8 @@
 #include <unistd.h>
 #include <math.h>
 
-#define WIN_WIDTH 600
-#define WIN_HEIGHT 400
+#define WIN_WIDTH 800
+#define WIN_HEIGHT 500
 #define NUM_LAYERS 3
 #define NUM_COLS 7
 #define BLOCK_OFFSET 50
@@ -88,7 +88,7 @@ struct Ball: public Rectangle // a Rectangular Ball...
 
     void setVelocity(float angle)
     {
-        velocity.x = speed * cos(angle);
+        velocity.x = 3 * speed * cos(angle); //bias for x movement
         velocity.y = speed * sin(angle);
     }
     
@@ -122,7 +122,9 @@ int main()
 
     // the player rectangle
     sf::Vector2f playerSize(BLOCK_HEIGHT, WIN_HEIGHT/5);
-    Paddle player(playerSize, WIN_WIDTH/6, WIN_HEIGHT - playerSize.y);
+    Paddle player1(playerSize, WIN_WIDTH/8, WIN_HEIGHT - playerSize.y);
+
+    Paddle player2(playerSize, (7.f/8) * (float)WIN_WIDTH, 0);
 
     // testing out the amazing rectangular ball
     sf::Vector2f ballSize(BLOCK_HEIGHT, BLOCK_HEIGHT);
@@ -143,20 +145,32 @@ int main()
             if (event.type == sf::Event::Closed)
                 window.close();
         }
-        // handle player input
+        // handle player1 input
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-            player.stop();
+            player1.stop();
         else if(sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-            player.move(true, false);
+            player1.move(true, false);
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-            player.move(false, true);
+            player1.move(false, true);
+        //handle player2 input
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::I) && sf::Keyboard::isKeyPressed(sf::Keyboard::K))
+            player2.stop();
+        else if(sf::Keyboard::isKeyPressed(sf::Keyboard::I))
+            player2.move(true, false);
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::K))
+            player2.move(false, true);
     
-        checkPaddleHits(player, ball);
-        player.update();
+        // collisions
+        checkPaddleHits(player1, ball);
+        checkPaddleHits(player2, ball);
 
+        player1.update();
+        player2.update();
         ball.update();
+
         // draw the updates
-        window.draw(player.body);
+        window.draw(player1.body);
+        window.draw(player2.body);
         window.draw(ball.body);
 
         window.display();
