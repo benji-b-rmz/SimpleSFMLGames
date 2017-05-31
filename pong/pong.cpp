@@ -1,5 +1,5 @@
 // Benjamin Ramirez
-// May 27, 2017
+// May 31, 2017
 // Simple Breakout clone using the SFML library
 
 #include <SFML/Graphics.hpp>
@@ -11,7 +11,7 @@
 #include <math.h>
 
 #define WIN_WIDTH 600
-#define WIN_HEIGHT 600
+#define WIN_HEIGHT 400
 #define NUM_LAYERS 3
 #define NUM_COLS 7
 #define BLOCK_OFFSET 50
@@ -33,15 +33,15 @@ struct Rectangle
     float getHeight(){return body.getLocalBounds().height;}
 };
 
-struct Player: public Rectangle
+struct Paddle: public Rectangle
 {
     sf::Vector2f velocity;
 
-    Player(sf::Vector2f size, float x, float y)
+    Paddle(sf::Vector2f size, float x, float y)
     {
         body.setSize(size);
         body.setPosition(x, y);
-        body.setFillColor(sf::Color::Blue);
+        body.setFillColor(sf::Color::White);
     }
 
     void update()
@@ -51,18 +51,18 @@ struct Player: public Rectangle
         stop();
     }
     
-    void stop(){velocity.x = 0;}
+    void stop(){velocity.y = 0;}
 
     void checkBoundaries()
     {
-        if(getLeft() < 0){ body.setPosition(0, getY()); }
-        if(getRight() > WIN_WIDTH){ body.setPosition(WIN_WIDTH - getWidth(), getY()); }
+        if(getTop() < 0){ body.setPosition(getX(), 0); }
+        if(getBottom() > WIN_HEIGHT){ body.setPosition(getX(), WIN_HEIGHT - getHeight()); }
     }
 
-    void move(bool left, bool right)
+    void move(bool up, bool down)
     {
-        if(left) this->velocity.x = -5;
-        if(right) this->velocity.x = 5;
+        if(up) this->velocity.y = -5;
+        if(down) this->velocity.y = 5;
     }
 };
 
@@ -70,7 +70,6 @@ struct Ball: public Rectangle // a Rectangular Ball...
 {
     sf::Vector2f velocity;
     float speed = 6.f;
-
 
     Ball(sf::Vector2f size, float x, float y, float angle, float speed)
     {
@@ -104,70 +103,30 @@ struct Ball: public Rectangle // a Rectangular Ball...
     }
 };
 
-struct Block: public Rectangle
-{
-    bool alive = true;
 
-    Block(sf::Vector2f size, float x, float y)
-    {
-        body.setSize(size);
-        body.setPosition(x, y);
-        body.setFillColor(sf::Color::Red);
-    }
-};
-
-void initBlocks( std::vector<Block>& blocks){
-
-    sf::Vector2f blockSize(WIN_WIDTH/NUM_COLS - 2, BLOCK_HEIGHT);
-    for(int i = 0; i < NUM_LAYERS; i++)
-    {
-        for(int j = 0; j < NUM_COLS; j++)
-        {
-            float x = ((float)j/NUM_COLS) * (float)WIN_WIDTH ;
-            float y = BLOCK_OFFSET + ((float)i * BLOCK_HEIGHT) + i;
-            Block block(blockSize, x, y);
-            blocks.push_back(block);
-        }
-    }
-}
-
-void checkPlayerHits(Player& player, Ball& ball)
+void checkPaddleHits(Paddle& paddle, Ball& ball)
 {
     // send the ball flying in different directions based on angle of impact
-    if(player.body.getGlobalBounds().intersects(ball.body.getGlobalBounds()))
+    if(paddle.body.getGlobalBounds().intersects(ball.body.getGlobalBounds()))
     {
-        float collision_angle = atan2(ball.getCenterY() - player.getCenterY(),
-                                      ball.getCenterX() - player.getCenterX());
+        float collision_angle = atan2(ball.getCenterY() - paddle.getCenterY(),
+                                      ball.getCenterX() - paddle.getCenterX());
         ball.setVelocity(collision_angle);
     }
 }
 
-void checkBlockHits(Block& block, Ball& ball)
-{
-    if(!block.alive){return;} // block is dead, ignore
-    if(block.body.getGlobalBounds().intersects(ball.body.getGlobalBounds())) 
-    {   // send ball flying in different directions based on angle of impact
-        block.alive = false;
-        float collision_angle = atan2(ball.getCenterY() - block.getCenterY(),
-                                      ball.getCenterX() - block.getCenterX());
-        ball.setVelocity(collision_angle);
-    }
-}
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(WIN_WIDTH, WIN_HEIGHT), "Breakout Clone");
+    sf::RenderWindow window(sf::VideoMode(WIN_WIDTH, WIN_HEIGHT), "Pong Clone");
 
     // the player rectangle
-    sf::Vector2f playerSize(100.f, BLOCK_HEIGHT);
-    Player player(playerSize, WIN_WIDTH/2, WIN_HEIGHT - playerSize.x);
+    sf::Vector2f playerSize(BLOCK_HEIGHT, WIN_HEIGHT/5);
+    Paddle player(playerSize, WIN_WIDTH/6, WIN_HEIGHT - playerSize.y);
 
     // testing out the amazing rectangular ball
     sf::Vector2f ballSize(BLOCK_HEIGHT, BLOCK_HEIGHT);
-    Ball ball(ballSize, WIN_WIDTH/2, WIN_HEIGHT/2 , PI/2.f, 6.f);
-
-    std::vector<Block> blocks;
-    initBlocks(blocks); 
+    Ball ball(ballSize, WIN_WIDTH/2, WIN_HEIGHT/2 , 0, 6.f);
 
     // set up objects for keeping constant FPS
     window.setFramerateLimit(60);
@@ -185,25 +144,15 @@ int main()
                 window.close();
         }
         // handle player input
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && sf::Keyboard::isKeyPressed(sf::Keyboard::S))
             player.stop();
-        else if(sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+        else if(sf::Keyboard::isKeyPressed(sf::Keyboard::W))
             player.move(true, false);
-        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
             player.move(false, true);
     
-        checkPlayerHits(player, ball);
+        checkPaddleHits(player, ball);
         player.update();
-
-        for(int i = 0; i < NUM_LAYERS; i++){
-            for (int j = 0; j < NUM_COLS; j++){
-                if(blocks[i*NUM_COLS + j].alive)
-                {
-                    window.draw(blocks[i*NUM_COLS + j].body);
-                    checkBlockHits(blocks[i*NUM_COLS + j], ball);
-                }
-            }
-        }
 
         ball.update();
         // draw the updates
