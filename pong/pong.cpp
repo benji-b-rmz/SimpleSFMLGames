@@ -132,6 +132,18 @@ int main()
 
     // set up objects for keeping constant FPS
     window.setFramerateLimit(60);
+    
+    // load font, create text variables
+    sf::Font font;
+    if(!font.loadFromFile("arial.ttf"))
+    { //error
+        std::cout << "Font did not load :-(\n"<< std::endl;
+    }
+    sf::Text text;
+    text.setFont(font);
+    text.setString("0 | 0");
+    text.setCharacterSize(20);
+    text.setColor(sf::Color::White);
 
     std::cout << "Game is starting!\n";
 
@@ -172,6 +184,7 @@ int main()
         window.draw(player1.body);
         window.draw(player2.body);
         window.draw(ball.body);
+        window.draw(text);
 
         window.display();
     }
