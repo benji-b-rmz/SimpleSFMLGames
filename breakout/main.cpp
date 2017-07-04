@@ -36,6 +36,7 @@ struct Rectangle
 struct Player: public Rectangle
 {
     sf::Vector2f velocity;
+    int lives = 5;
 
     Player(sf::Vector2f size, float x, float y)
     {
@@ -63,6 +64,15 @@ struct Player: public Rectangle
     {
         if(left) this->velocity.x = -5;
         if(right) this->velocity.x = 5;
+    }
+
+    void loseLife(){this->lives--;};
+    
+    bool isAlive()
+    {
+        if(this->lives > 0)
+            return true;
+        return false;
     }
 };
 
@@ -142,16 +152,18 @@ void checkPlayerHits(Player& player, Ball& ball)
     }
 }
 
-void checkBlockHits(Block& block, Ball& ball)
+bool checkBlockHits(Block& block, Ball& ball)
 {
-    if(!block.alive){return;} // block is dead, ignore
+    if(!block.alive){return false;} // block is dead, ignore
     if(block.body.getGlobalBounds().intersects(ball.body.getGlobalBounds())) 
     {   // send ball flying in different directions based on angle of impact
         block.alive = false;
         float collision_angle = atan2(ball.getCenterY() - block.getCenterY(),
                                       ball.getCenterX() - block.getCenterX());
         ball.setVelocity(collision_angle);
+        return true;
     }
+    return false;
 }
 
 int main()
@@ -171,6 +183,19 @@ int main()
 
     // set up objects for keeping constant FPS
     window.setFramerateLimit(60);
+    int score = 0;  //Holding the current score, increments when block is broken
+    // setting up game text
+    sf::Font gameFont;
+    if(!gameFont.loadFromFile("arial.ttf"))
+    { //there was an error loading the text file
+        std::cout << "Font did not load\n" << std::endl;
+    }
+    sf::Text statusText;
+    statusText.setFont(gameFont);
+    statusText.setString("Score: " + std::to_string(score)); 
+    statusText.setCharacterSize(20);
+    statusText.setColor(sf::Color::White);
+    statusText.setStyle(sf::Text::Bold);
 
     std::cout << "Game is starting!\n";
 
@@ -200,18 +225,22 @@ int main()
                 if(blocks[i*NUM_COLS + j].alive)
                 {
                     window.draw(blocks[i*NUM_COLS + j].body);
-                    checkBlockHits(blocks[i*NUM_COLS + j], ball);
+                    if(checkBlockHits(blocks[i*NUM_COLS + j], ball))
+                        score++;
+                        statusText.setString("Score: " + std::to_string(score));
                 }
             }
         }
-
+        
         ball.update();
         // draw the updates
         window.draw(player.body);
         window.draw(ball.body);
+        window.draw(statusText);
 
         window.display();
     }
 
     return 0;
 }
+
